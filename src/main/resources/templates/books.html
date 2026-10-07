@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Библиотека</title>
+    <link rel="icon" type="image/png" th:href="@{/img/book.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/books}">
+            <img th:src="@{/img/book.png}" alt="">
+            Библиотека
+        </a>
+        <button type="button" class="btn btn-primary" data-heading="Новая книга"
+                th:data-action="@{/books}"
+                th:data-issue-date="${#temporals.createToday()}">+ Добавить книгу</button>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="flash" th:if="${message}" th:text="${message}">Сообщение</div>
+
+    <section class="cards">
+        <div class="card card-accent">
+            <div class="card-value" th:text="${bookCount}">0</div>
+            <div class="card-label">Книг в таблице</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.total}">0</div>
+            <div class="card-label">Всего в базе</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.onHand}">0</div>
+            <div class="card-label">На руках</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.returned}">0</div>
+            <div class="card-label">Сдано</div>
+        </div>
+    </section>
+
+    <form id="search-form" class="panel search" method="get" th:action="@{/books}" th:object="${criteria}">
+        <h2>Поиск</h2>
+        <div class="grid">
+            <label>Название
+                <input type="text" th:field="*{title}" placeholder="часть названия">
+            </label>
+            <label>Издательство
+                <input type="text" th:field="*{publishingHouse}" placeholder="например, Питер">
+            </label>
+            <label>ФИО студента
+                <input type="text" th:field="*{studentName}" placeholder="часть ФИО">
+            </label>
+            <label>Состояние
+                <select th:field="*{status}">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}">Все</option>
+                </select>
+            </label>
+            <label>Выдана с
+                <input type="date" th:field="*{issueFrom}">
+            </label>
+            <label>Выдана по
+                <input type="date" th:field="*{issueTo}">
+            </label>
+        </div>
+
+        <input type="hidden" th:field="*{sortField}">
+        <input type="hidden" th:field="*{sortDir}">
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a class="btn" th:href="@{/books}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>
+                Книги
+                <span class="badge" th:text="${bookCount}">0</span>
+            </h2>
+            <span class="muted">
+                Сортировка: <b th:text="${criteria.sortDescription}">по издательству, по убыванию</b>
+                <span th:if="${criteria.filtered}">, применён поиск</span>
+            </span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th th:class="${criteria.sortClass('id')}"><a th:href="@{${criteria.sortUrl('id')}}">ID</a></th>
+                    <th th:class="${criteria.sortClass('title')}"><a th:href="@{${criteria.sortUrl('title')}}">Название</a></th>
+                    <th th:class="${criteria.sortClass('publishingHouse')}"><a th:href="@{${criteria.sortUrl('publishingHouse')}}">Издательство</a></th>
+                    <th th:class="${criteria.sortClass('issueDate')}"><a th:href="@{${criteria.sortUrl('issueDate')}}">Дата выдачи</a></th>
+                    <th th:class="${criteria.sortClass('studentName')}"><a th:href="@{${criteria.sortUrl('studentName')}}">ФИО студента</a></th>
+                    <th th:class="${criteria.sortClass('returnDate')}"><a th:href="@{${criteria.sortUrl('returnDate')}}">Дата сдачи</a></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${books}">
+                    <td class="num" th:text="${b.id}">1</td>
+                    <td th:text="${b.title}">Название</td>
+                    <td th:text="${b.publishingHouse}">Издательство</td>
+                    <td th:text="${#temporals.format(b.issueDate, 'dd.MM.yyyy')}">01.01.2026</td>
+                    <td th:text="${b.studentName}">ФИО</td>
+                    <td>
+                        <span th:if="${b.returnDate != null}"
+                              th:text="${#temporals.format(b.returnDate, 'dd.MM.yyyy')}">01.01.2026</span>
+                        <span th:if="${b.returnDate == null}" class="tag">на руках</span>
+                    </td>
+                    <td class="row-actions">
+                        <button type="button" class="btn btn-small"
+                                th:data-action="@{/books/{id}(id=${b.id})}"
+                                th:data-heading="'Редактирование книги (ID ' + ${b.id} + ')'"
+                                th:data-title="${b.title}"
+                                th:data-publishing-house="${b.publishingHouse}"
+                                th:data-student-name="${b.studentName}"
+                                th:data-issue-date="${b.issueDate}"
+                                th:data-return-date="${b.returnDate}">Изменить</button>
+                        <form method="post" th:action="@{/books/{id}/delete(id=${b.id})}"
+                              onsubmit="return confirm('Удалить эту книгу?');">
+                            <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+                            <button type="submit" class="btn btn-small btn-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${books.isEmpty()}">
+                    <td colspan="7" class="empty">Ничего не найдено</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>Выдачи книг по дням</h2>
+            <span class="muted">Всего выдач за период: <b th:text="${histogramTotal}">0</b></span>
+        </div>
+        <div class="period">
+            <label>Период, дней
+                <input type="number" name="histogramDays" min="1" max="31" form="search-form"
+                       th:value="${criteria.histogramDays}">
+            </label>
+            <button type="submit" class="btn" form="search-form">Показать</button>
+        </div>
+        <div class="histogram">
+            <div class="bar-col" th:each="d : ${histogram}" th:classappend="${d.today} ? 'today'"
+                 th:title="${d.label} + ': ' + ${d.count}">
+                <span class="bar-value" th:text="${d.count}">0</span>
+                <div class="bar-track">
+                    <div class="bar" th:style="'height:' + ${d.heightPercent} + '%'"></div>
+                </div>
+                <span class="bar-label" th:text="${d.label}">01.01</span>
+                <span class="bar-weekday" th:text="${d.weekday}">пн</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<dialog id="book-dialog" th:data-open="${formOpen}">
+    <h2 th:text="${book.id == null} ? 'Новая книга' : 'Редактирование книги (ID ' + ${book.id} + ')'">Книга</h2>
+
+    <form method="post" class="book-form" th:object="${book}"
+          th:action="${book.id == null} ? @{/books} : @{/books/{id}(id=${book.id})}">
+        <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+
+        <label>Название книги *
+            <input type="text" th:field="*{title}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+        </label>
+
+        <label>Издательство *
+            <input type="text" th:field="*{publishingHouse}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('publishingHouse')}" th:errors="*{publishingHouse}"></span>
+        </label>
+
+        <label>ФИО студента *
+            <input type="text" th:field="*{studentName}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('studentName')}" th:errors="*{studentName}"></span>
+        </label>
+
+        <div class="two">
+            <label>Дата выдачи *
+                <input type="date" th:field="*{issueDate}" th:errorclass="invalid" required>
+                <span class="error" th:if="${#fields.hasErrors('issueDate')}" th:errors="*{issueDate}"></span>
+            </label>
+
+            <label>Дата сдачи
+                <input type="date" th:field="*{returnDate}" th:errorclass="invalid">
+                <span class="hint">оставьте пустой, если книга ещё не сдана</span>
+                <span class="error" th:if="${#fields.hasErrors('returnDate')}" th:errors="*{returnDate}"></span>
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn" formmethod="dialog" formnovalidate>Отмена</button>
+        </div>
+    </form>
+</dialog>
+
+<script th:src="@{/js/book-dialog.js}"></script>
+<script th:src="@{/js/list.js}"></script>
+</body>
+</html>
