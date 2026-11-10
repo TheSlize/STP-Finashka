@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Автопарк</title>
+    <link rel="icon" type="image/png" th:href="@{/img/car.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/cars}">
+            <img th:src="@{/img/car.png}" alt="">
+            Автопарк
+        </a>
+        <button type="button" class="btn btn-primary" data-heading="Новая машина"
+                th:data-action="@{/cars}"
+                th:data-registration-date="${#temporals.createToday()}">+ Добавить машину</button>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="flash" th:if="${message}" th:text="${message}">Сообщение</div>
+
+    <section class="cards">
+        <div class="card card-accent">
+            <div class="card-value" th:text="${carCount}">0</div>
+            <div class="card-label">Машин в таблице</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.total}">0</div>
+            <div class="card-label">Всего в базе</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.models}">0</div>
+            <div class="card-label">Разных марок</div>
+        </div>
+    </section>
+
+    <form id="search-form" class="panel search" method="get" th:action="@{/cars}" th:object="${criteria}">
+        <h2>Поиск</h2>
+        <div class="grid">
+            <label>Марка
+                <input type="text" th:field="*{model}" placeholder="например, Toyota">
+            </label>
+            <label>Год выпуска с
+                <input type="number" th:field="*{yearFrom}" min="1900" th:max="${currentYear}" placeholder="2010">
+            </label>
+            <label>Поставлена на учёт с
+                <input type="date" th:field="*{registeredFrom}">
+            </label>
+            <label>ФИО владельца
+                <input type="text" th:field="*{ownerName}" placeholder="часть ФИО">
+            </label>
+            <label>Год выпуска по
+                <input type="number" th:field="*{yearTo}" min="1900" th:max="${currentYear}" th:placeholder="${currentYear}">
+            </label>
+            <label>Поставлена на учёт по
+                <input type="date" th:field="*{registeredTo}">
+            </label>
+        </div>
+
+        <input type="hidden" th:field="*{sortField}">
+        <input type="hidden" th:field="*{sortDir}">
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a class="btn" th:href="@{/cars}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>
+                Машины
+                <span class="badge" th:text="${carCount}">0</span>
+            </h2>
+            <span class="muted">
+                Сортировка: <b th:text="${criteria.sortDescription}">по году выпуска, по убыванию</b>
+                <span th:if="${criteria.filtered}">, применён поиск</span>
+            </span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th th:class="${criteria.sortClass('id')}"><a th:href="@{${criteria.sortUrl('id')}}">ID</a></th>
+                    <th th:class="${criteria.sortClass('model')}"><a th:href="@{${criteria.sortUrl('model')}}">Марка</a></th>
+                    <th th:class="${criteria.sortClass('manufactureYear')}"><a th:href="@{${criteria.sortUrl('manufactureYear')}}">Год выпуска</a></th>
+                    <th th:class="${criteria.sortClass('registrationDate')}"><a th:href="@{${criteria.sortUrl('registrationDate')}}">Дата постановки на учёт</a></th>
+                    <th th:class="${criteria.sortClass('ownerName')}"><a th:href="@{${criteria.sortUrl('ownerName')}}">ФИО владельца</a></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${cars}">
+                    <td class="num" th:text="${c.id}">1</td>
+                    <td th:text="${c.model}">Марка</td>
+                    <td class="num" th:text="${c.manufactureYear}">2020</td>
+                    <td th:text="${#temporals.format(c.registrationDate, 'dd.MM.yyyy')}">01.01.2026</td>
+                    <td th:text="${c.ownerName}">ФИО</td>
+                    <td class="row-actions">
+                        <button type="button" class="btn btn-small"
+                                th:data-action="@{/cars/{id}(id=${c.id})}"
+                                th:data-heading="'Редактирование машины (ID ' + ${c.id} + ')'"
+                                th:data-model="${c.model}"
+                                th:data-manufacture-year="${c.manufactureYear}"
+                                th:data-registration-date="${c.registrationDate}"
+                                th:data-owner-name="${c.ownerName}">Изменить</button>
+                        <form method="post" th:action="@{/cars/{id}/delete(id=${c.id})}"
+                              onsubmit="return confirm('Удалить эту машину?');">
+                            <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+                            <button type="submit" class="btn btn-small btn-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${cars.isEmpty()}">
+                    <td colspan="6" class="empty">Ничего не найдено</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>Постановка на учёт по дням</h2>
+            <span class="muted">Всего за период: <b th:text="${histogramTotal}">0</b></span>
+        </div>
+        <div class="period">
+            <label>Период, дней
+                <input type="number" name="histogramDays" min="1" max="31" form="search-form"
+                       th:value="${criteria.histogramDays}">
+            </label>
+            <button type="submit" class="btn" form="search-form">Показать</button>
+        </div>
+        <div class="histogram">
+            <div class="bar-col" th:each="d : ${histogram}" th:classappend="${d.today} ? 'today'"
+                 th:title="${d.label} + ': ' + ${d.count}">
+                <span class="bar-value" th:text="${d.count}">0</span>
+                <div class="bar-track">
+                    <div class="bar" th:style="'height:' + ${d.heightPercent} + '%'"></div>
+                </div>
+                <span class="bar-label" th:text="${d.label}">01.01</span>
+                <span class="bar-weekday" th:text="${d.weekday}">пн</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<dialog id="car-dialog" th:data-open="${formOpen}">
+    <h2 th:text="${car.id == null} ? 'Новая машина' : 'Редактирование машины (ID ' + ${car.id} + ')'">Машина</h2>
+
+    <form method="post" class="car-form" th:object="${car}"
+          th:action="${car.id == null} ? @{/cars} : @{/cars/{id}(id=${car.id})}">
+        <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+
+        <label>Марка *
+            <input type="text" th:field="*{model}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('model')}" th:errors="*{model}"></span>
+        </label>
+
+        <label>ФИО владельца *
+            <input type="text" th:field="*{ownerName}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('ownerName')}" th:errors="*{ownerName}"></span>
+        </label>
+
+        <div class="two">
+            <label>Год выпуска *
+                <input type="number" th:field="*{manufactureYear}" th:errorclass="invalid"
+                       min="1900" th:max="${currentYear}" required>
+                <span class="error" th:if="${#fields.hasErrors('manufactureYear')}" th:errors="*{manufactureYear}"></span>
+            </label>
+
+            <label>Дата постановки на учёт *
+                <input type="date" th:field="*{registrationDate}" th:errorclass="invalid" required>
+                <span class="error" th:if="${#fields.hasErrors('registrationDate')}" th:errors="*{registrationDate}"></span>
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn" formmethod="dialog" formnovalidate>Отмена</button>
+        </div>
+    </form>
+</dialog>
+
+<script th:src="@{/js/car-dialog.js}"></script>
+<script th:src="@{/js/list.js}"></script>
+</body>
+</html>

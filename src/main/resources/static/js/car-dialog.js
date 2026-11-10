@@ -1,5 +1,5 @@
-const dialog = document.getElementById('book-dialog');
-const fields = ['title', 'publishingHouse', 'studentName', 'issueDate', 'returnDate'];
+const dialog = document.getElementById('car-dialog');
+const fields = ['model', 'manufactureYear', 'registrationDate', 'ownerName'];
 
 document.addEventListener('click', event => {
     const button = event.target.closest('[data-action]');

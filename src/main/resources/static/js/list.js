@@ -7,13 +7,13 @@ async function load(url, options) {
     const page = new DOMParser().parseFromString(await response.text(), 'text/html');
     document.querySelector('main').innerHTML = page.querySelector('main').innerHTML;
 
-    const bookDialog = document.getElementById('book-dialog');
-    const loadedDialog = page.getElementById('book-dialog');
-    bookDialog.innerHTML = loadedDialog.innerHTML;
+    const carDialog = document.getElementById('car-dialog');
+    const loadedDialog = page.getElementById('car-dialog');
+    carDialog.innerHTML = loadedDialog.innerHTML;
     if (!loadedDialog.dataset.open) {
-        bookDialog.close();
-    } else if (!bookDialog.open) {
-        bookDialog.showModal();
+        carDialog.close();
+    } else if (!carDialog.open) {
+        carDialog.showModal();
     }
 
     if (response.url !== location.href) {
