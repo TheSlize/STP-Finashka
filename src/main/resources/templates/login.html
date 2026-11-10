@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход - Кинотеатр</title>
+    <link rel="icon" type="image/png" th:href="@{/img/film.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-page">
+<div class="panel auth">
+    <div class="brand">
+        <img th:src="@{/img/film.png}" alt="">
+        Кинотеатр
+    </div>
+
+    <div class="flash" th:if="${message}" th:text="${message}">Сообщение</div>
+    <div class="flash" th:if="${param.logout}">Вы вышли из системы</div>
+    <div class="flash flash-error" th:if="${param.error}">Неверный логин или пароль</div>
+
+    <h2>Вход</h2>
+    <form method="post" class="auth-form" th:action="@{/login}">
+        <label>Логин
+            <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+        <label>Пароль
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
+
+    <p class="auth-switch muted">Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a></p>
+</div>
+</body>
+</html>

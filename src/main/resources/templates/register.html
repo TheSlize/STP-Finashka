@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация - Кинотеатр</title>
+    <link rel="icon" type="image/png" th:href="@{/img/film.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="auth-page">
+<div class="panel auth">
+    <div class="brand">
+        <img th:src="@{/img/film.png}" alt="">
+        Кинотеатр
+    </div>
+
+    <h2>Регистрация</h2>
+    <form method="post" class="auth-form" th:action="@{/register}" th:object="${form}">
+        <label>Логин
+            <input type="text" th:field="*{username}" th:errorclass="invalid" autocomplete="username" maxlength="50" required autofocus>
+            <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+        </label>
+        <label>Пароль
+            <input type="password" th:field="*{password}" th:errorclass="invalid" autocomplete="new-password" maxlength="100" required>
+            <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </label>
+        <label>Повторите пароль
+            <input type="password" th:field="*{passwordConfirm}" th:errorclass="invalid" autocomplete="new-password" maxlength="100" required>
+            <span class="error" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></span>
+        </label>
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+    </form>
+
+    <p class="auth-switch muted">Уже есть аккаунт? <a th:href="@{/login}">Войти</a></p>
+</div>
+</body>
+</html>

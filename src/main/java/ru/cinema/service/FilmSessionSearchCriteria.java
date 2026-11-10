@@ -1,32 +1,32 @@
-package ru.library.service;
+package ru.cinema.service;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.library.model.LoanStatus;
 
 import java.time.LocalDate;
 import java.util.Set;
 
-public class BookSearchCriteria {
+public class FilmSessionSearchCriteria {
 
     private static final Set<String> SORTABLE_FIELDS =
-            Set.of("id", "title", "publishingHouse", "issueDate", "studentName", "returnDate");
+            Set.of("id", "filmTitle", "filmStudio", "sessionTime", "ticketCount");
 
+    private static final String DEFAULT_FIELD = "sessionTime";
     private static final String DEFAULT_DIR = Sort.Direction.DESC.name().toLowerCase();
     private static final int MAX_HISTOGRAM_DAYS = 31;
 
-    private String title;
-    private String publishingHouse;
-    private String studentName;
-    private LoanStatus status = LoanStatus.ALL;
+    private String filmTitle;
+    private String filmStudio;
+    private Integer ticketsFrom;
+    private Integer ticketsTo;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate issueFrom;
+    private LocalDate dateFrom;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate issueTo;
+    private LocalDate dateTo;
 
-    private String sortField = "issueDate";
+    private String sortField = DEFAULT_FIELD;
     private String sortDir = DEFAULT_DIR;
 
     private Integer histogramDays;
@@ -34,7 +34,7 @@ public class BookSearchCriteria {
     public String getEffectiveSortField() {
         return sortField != null && SORTABLE_FIELDS.contains(sortField)
                 ? sortField
-                : "issueDate";
+                : DEFAULT_FIELD;
     }
 
     public Sort.Direction getEffectiveDirection() {
@@ -49,11 +49,10 @@ public class BookSearchCriteria {
     public String getSortDescription() {
         String field = switch (getEffectiveSortField()) {
             case "id" -> "ID";
-            case "title" -> "названию";
-            case "publishingHouse" -> "издательству";
-            case "studentName" -> "ФИО студента";
-            case "returnDate" -> "дате сдачи";
-            default -> "дате выдачи";
+            case "filmTitle" -> "названию фильма";
+            case "filmStudio" -> "киностудии";
+            case "ticketCount" -> "количеству билетов";
+            default -> "дате сеанса";
         };
         String dir = getEffectiveDirection() == Sort.Direction.ASC ? "по возрастанию" : "по убыванию";
         return "по " + field + ", " + dir;
@@ -76,18 +75,20 @@ public class BookSearchCriteria {
     }
 
     private UriComponentsBuilder filterBuilder() {
-        UriComponentsBuilder b = UriComponentsBuilder.fromPath("/books");
-        addParam(b, "title", title);
-        addParam(b, "publishingHouse", publishingHouse);
-        addParam(b, "studentName", studentName);
-        if (status != null && status != LoanStatus.ALL) {
-            b.queryParam("status", status.name());
+        UriComponentsBuilder b = UriComponentsBuilder.fromPath("/sessions");
+        addParam(b, "filmTitle", filmTitle);
+        addParam(b, "filmStudio", filmStudio);
+        if (dateFrom != null) {
+            b.queryParam("dateFrom", dateFrom);
         }
-        if (issueFrom != null) {
-            b.queryParam("issueFrom", issueFrom);
+        if (dateTo != null) {
+            b.queryParam("dateTo", dateTo);
         }
-        if (issueTo != null) {
-            b.queryParam("issueTo", issueTo);
+        if (ticketsFrom != null) {
+            b.queryParam("ticketsFrom", ticketsFrom);
+        }
+        if (ticketsTo != null) {
+            b.queryParam("ticketsTo", ticketsTo);
         }
         b.queryParam("histogramDays", getHistogramDays());
         return b;
@@ -101,9 +102,9 @@ public class BookSearchCriteria {
     }
 
     public boolean isFiltered() {
-        return hasText(title) || hasText(publishingHouse) || hasText(studentName)
-                || issueFrom != null || issueTo != null
-                || (status != null && status != LoanStatus.ALL);
+        return hasText(filmTitle) || hasText(filmStudio)
+                || dateFrom != null || dateTo != null
+                || ticketsFrom != null || ticketsTo != null;
     }
 
     private static void addParam(UriComponentsBuilder b, String name, String value) {
@@ -127,52 +128,52 @@ public class BookSearchCriteria {
         this.histogramDays = histogramDays;
     }
 
-    public String getTitle() {
-        return title;
+    public String getFilmTitle() {
+        return filmTitle;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setFilmTitle(String filmTitle) {
+        this.filmTitle = filmTitle;
     }
 
-    public String getPublishingHouse() {
-        return publishingHouse;
+    public String getFilmStudio() {
+        return filmStudio;
     }
 
-    public void setPublishingHouse(String publishingHouse) {
-        this.publishingHouse = publishingHouse;
+    public void setFilmStudio(String filmStudio) {
+        this.filmStudio = filmStudio;
     }
 
-    public String getStudentName() {
-        return studentName;
+    public Integer getTicketsFrom() {
+        return ticketsFrom;
     }
 
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
+    public void setTicketsFrom(Integer ticketsFrom) {
+        this.ticketsFrom = ticketsFrom;
     }
 
-    public LoanStatus getStatus() {
-        return status;
+    public Integer getTicketsTo() {
+        return ticketsTo;
     }
 
-    public void setStatus(LoanStatus status) {
-        this.status = status;
+    public void setTicketsTo(Integer ticketsTo) {
+        this.ticketsTo = ticketsTo;
     }
 
-    public LocalDate getIssueFrom() {
-        return issueFrom;
+    public LocalDate getDateFrom() {
+        return dateFrom;
     }
 
-    public void setIssueFrom(LocalDate issueFrom) {
-        this.issueFrom = issueFrom;
+    public void setDateFrom(LocalDate dateFrom) {
+        this.dateFrom = dateFrom;
     }
 
-    public LocalDate getIssueTo() {
-        return issueTo;
+    public LocalDate getDateTo() {
+        return dateTo;
     }
 
-    public void setIssueTo(LocalDate issueTo) {
-        this.issueTo = issueTo;
+    public void setDateTo(LocalDate dateTo) {
+        this.dateTo = dateTo;
     }
 
     public String getSortField() {

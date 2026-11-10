@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Кинотеатр</title>
+    <link rel="icon" type="image/png" th:href="@{/img/film.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/sessions}">
+            <img th:src="@{/img/film.png}" alt="">
+            Кинотеатр
+        </a>
+        <div class="topbar-actions">
+            <button type="button" class="btn btn-primary" data-heading="Новый сеанс"
+                    th:data-action="@{/sessions}"
+                    th:data-session-time="${#temporals.format(defaultTime, 'yyyy-MM-dd')} + 'T' + ${#temporals.format(defaultTime, 'HH:mm')}">+ Добавить сеанс</button>
+            <span class="user" th:text="${username}">admin</span>
+            <form method="post" th:action="@{/logout}">
+                <button type="submit" class="btn btn-ghost">Выйти</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="flash" th:if="${message}" th:text="${message}">Сообщение</div>
+
+    <section class="cards">
+        <div class="card card-accent">
+            <div class="card-value" th:text="${sessionCount}">0</div>
+            <div class="card-label">Сеансов в таблице</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.total}">0</div>
+            <div class="card-label">Всего сеансов в базе</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.studios}">0</div>
+            <div class="card-label">Киностудий</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.tickets}">0</div>
+            <div class="card-label">Билетов на все сеансы</div>
+        </div>
+    </section>
+
+    <form id="search-form" class="panel search" method="get" th:action="@{/sessions}" th:object="${criteria}">
+        <h2>Поиск</h2>
+        <div class="grid">
+            <label>Название фильма
+                <input type="text" th:field="*{filmTitle}" placeholder="часть названия">
+            </label>
+            <label>Сеанс с
+                <input type="date" th:field="*{dateFrom}">
+            </label>
+            <label>Билетов от
+                <input type="number" th:field="*{ticketsFrom}" min="1" max="1000" placeholder="1">
+            </label>
+            <label>Киностудия
+                <input type="text" th:field="*{filmStudio}" placeholder="например, Мосфильм">
+            </label>
+            <label>Сеанс по
+                <input type="date" th:field="*{dateTo}">
+            </label>
+            <label>Билетов до
+                <input type="number" th:field="*{ticketsTo}" min="1" max="1000" placeholder="1000">
+            </label>
+        </div>
+
+        <input type="hidden" th:field="*{sortField}">
+        <input type="hidden" th:field="*{sortDir}">
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a class="btn" th:href="@{/sessions}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>
+                Сеансы
+                <span class="badge" th:text="${sessionCount}">0</span>
+            </h2>
+            <span class="muted">
+                Сортировка: <b th:text="${criteria.sortDescription}">по дате сеанса, по убыванию</b>
+                <span th:if="${criteria.filtered}">, применён поиск</span>
+            </span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th th:class="${criteria.sortClass('id')}"><a th:href="@{${criteria.sortUrl('id')}}">ID</a></th>
+                    <th th:class="${criteria.sortClass('filmTitle')}"><a th:href="@{${criteria.sortUrl('filmTitle')}}">Название фильма</a></th>
+                    <th th:class="${criteria.sortClass('filmStudio')}"><a th:href="@{${criteria.sortUrl('filmStudio')}}">Киностудия</a></th>
+                    <th th:class="${criteria.sortClass('sessionTime')}"><a th:href="@{${criteria.sortUrl('sessionTime')}}">Дата и время сеанса</a></th>
+                    <th th:class="${criteria.sortClass('ticketCount')}"><a th:href="@{${criteria.sortUrl('ticketCount')}}">Билетов</a></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${sessions}">
+                    <td class="num" th:text="${s.id}">1</td>
+                    <td th:text="${s.filmTitle}">Название</td>
+                    <td th:text="${s.filmStudio}">Киностудия</td>
+                    <td th:text="${#temporals.format(s.sessionTime, 'dd.MM.yyyy HH:mm')}">01.01.2026 18:00</td>
+                    <td class="num" th:text="${s.ticketCount}">100</td>
+                    <td class="row-actions">
+                        <button type="button" class="btn btn-small"
+                                th:data-action="@{/sessions/{id}(id=${s.id})}"
+                                th:data-heading="'Редактирование сеанса (ID ' + ${s.id} + ')'"
+                                th:data-film-title="${s.filmTitle}"
+                                th:data-film-studio="${s.filmStudio}"
+                                th:data-session-time="${#temporals.format(s.sessionTime, 'yyyy-MM-dd')} + 'T' + ${#temporals.format(s.sessionTime, 'HH:mm')}"
+                                th:data-ticket-count="${s.ticketCount}">Изменить</button>
+                        <form method="post" th:action="@{/sessions/{id}/delete(id=${s.id})}"
+                              onsubmit="return confirm('Удалить этот сеанс?');">
+                            <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+                            <button type="submit" class="btn btn-small btn-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${sessions.isEmpty()}">
+                    <td colspan="6" class="empty">Ничего не найдено</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>Сеансы по дням</h2>
+            <span class="muted">Всего сеансов за период: <b th:text="${histogramTotal}">0</b></span>
+        </div>
+        <div class="period">
+            <label>Период, дней
+                <input type="number" name="histogramDays" min="1" max="31" form="search-form"
+                       th:value="${criteria.histogramDays}">
+            </label>
+            <button type="submit" class="btn" form="search-form">Показать</button>
+        </div>
+        <div class="histogram">
+            <div class="bar-col" th:each="d : ${histogram}" th:classappend="${d.today} ? 'today'"
+                 th:title="${d.label} + ': ' + ${d.count}">
+                <span class="bar-value" th:text="${d.count}">0</span>
+                <div class="bar-track">
+                    <div class="bar" th:style="'height:' + ${d.heightPercent} + '%'"></div>
+                </div>
+                <span class="bar-label" th:text="${d.label}">01.01</span>
+                <span class="bar-weekday" th:text="${d.weekday}">пн</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<dialog id="session-dialog" th:data-open="${formOpen}">
+    <h2 th:text="${filmSession.id == null} ? 'Новый сеанс' : 'Редактирование сеанса (ID ' + ${filmSession.id} + ')'">Сеанс</h2>
+
+    <form method="post" class="session-form" th:object="${filmSession}"
+          th:action="${filmSession.id == null} ? @{/sessions} : @{/sessions/{id}(id=${filmSession.id})}">
+        <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+
+        <label>Название фильма *
+            <input type="text" th:field="*{filmTitle}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('filmTitle')}" th:errors="*{filmTitle}"></span>
+        </label>
+
+        <label>Киностудия *
+            <input type="text" th:field="*{filmStudio}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('filmStudio')}" th:errors="*{filmStudio}"></span>
+        </label>
+
+        <div class="two">
+            <label>Дата и время сеанса *
+                <input type="datetime-local" th:field="*{sessionTime}" th:errorclass="invalid" required>
+                <span class="error" th:if="${#fields.hasErrors('sessionTime')}" th:errors="*{sessionTime}"></span>
+            </label>
+
+            <label>Количество билетов *
+                <input type="number" th:field="*{ticketCount}" th:errorclass="invalid" min="1" max="1000" required>
+                <span class="error" th:if="${#fields.hasErrors('ticketCount')}" th:errors="*{ticketCount}"></span>
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn" formmethod="dialog" formnovalidate>Отмена</button>
+        </div>
+    </form>
+</dialog>
+
+<script th:src="@{/js/session-dialog.js}"></script>
+<script th:src="@{/js/list.js}"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package ru.library.service;
+package ru.cinema.service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
