@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Склад техники</title>
+    <link rel="icon" type="image/png" th:href="@{/img/box.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/equipment}">
+            <img th:src="@{/img/box.png}" alt="">
+            Склад техники
+        </a>
+        <div class="topbar-actions">
+            <button type="button" class="btn btn-primary" data-heading="Новая техника"
+                    th:data-action="@{/equipment}"
+                    th:data-arrival-date="${#temporals.createToday()}">+ Добавить технику</button>
+            <span class="user" th:text="${username}">admin</span>
+            <form method="post" th:action="@{/logout}">
+                <button type="submit" class="btn btn-ghost">Выйти</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="flash" th:if="${message}" th:text="${message}">Сообщение</div>
+
+    <section class="cards">
+        <div class="card card-accent">
+            <div class="card-value" th:text="${itemCount}">0</div>
+            <div class="card-label">Записей в таблице</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.total}">0</div>
+            <div class="card-label">Всего в базе</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.inStock}">0</div>
+            <div class="card-label">На складе</div>
+        </div>
+        <div class="card">
+            <div class="card-value" th:text="${stats.shipped}">0</div>
+            <div class="card-label">Вывезено</div>
+        </div>
+    </section>
+
+    <form id="search-form" class="panel search" method="get" th:action="@{/equipment}" th:object="${criteria}">
+        <h2>Поиск</h2>
+        <div class="grid">
+            <label>Вид техники
+                <input type="text" th:field="*{type}" placeholder="например, Ноутбук">
+            </label>
+            <label>Группа техники
+                <input type="text" th:field="*{groupName}" placeholder="часть названия группы">
+            </label>
+            <label>ФИО водителя
+                <input type="text" th:field="*{driverName}" placeholder="часть ФИО">
+            </label>
+            <label>Состояние
+                <select th:field="*{status}">
+                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}">Все</option>
+                </select>
+            </label>
+            <label>Ввезена с
+                <input type="date" th:field="*{arrivalFrom}">
+            </label>
+            <label>Ввезена по
+                <input type="date" th:field="*{arrivalTo}">
+            </label>
+        </div>
+
+        <input type="hidden" th:field="*{sortField}">
+        <input type="hidden" th:field="*{sortDir}">
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a class="btn" th:href="@{/equipment}">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>
+                Техника
+                <span class="badge" th:text="${itemCount}">0</span>
+            </h2>
+            <span class="muted">
+                Сортировка: <b th:text="${criteria.sortDescription}">по дате ввоза, по убыванию</b>
+                <span th:if="${criteria.filtered}">, применён поиск</span>
+            </span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th th:class="${criteria.sortClass('id')}"><a th:href="@{${criteria.sortUrl('id')}}">ID</a></th>
+                    <th th:class="${criteria.sortClass('type')}"><a th:href="@{${criteria.sortUrl('type')}}">Вид техники</a></th>
+                    <th th:class="${criteria.sortClass('groupName')}"><a th:href="@{${criteria.sortUrl('groupName')}}">Группа техники</a></th>
+                    <th th:class="${criteria.sortClass('arrivalDate')}"><a th:href="@{${criteria.sortUrl('arrivalDate')}}">Дата ввоза</a></th>
+                    <th th:class="${criteria.sortClass('departureDate')}"><a th:href="@{${criteria.sortUrl('departureDate')}}">Дата вывоза</a></th>
+                    <th th:class="${criteria.sortClass('driverName')}"><a th:href="@{${criteria.sortUrl('driverName')}}">ФИО водителя</a></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${items}">
+                    <td class="num" th:text="${e.id}">1</td>
+                    <td th:text="${e.type}">Вид</td>
+                    <td th:text="${e.groupName}">Группа</td>
+                    <td th:text="${#temporals.format(e.arrivalDate, 'dd.MM.yyyy')}">01.01.2026</td>
+                    <td>
+                        <span th:if="${e.departureDate != null}"
+                              th:text="${#temporals.format(e.departureDate, 'dd.MM.yyyy')}">01.01.2026</span>
+                        <span th:if="${e.departureDate == null}" class="tag">на складе</span>
+                    </td>
+                    <td th:text="${e.driverName}">ФИО</td>
+                    <td class="row-actions">
+                        <button type="button" class="btn btn-small"
+                                th:data-action="@{/equipment/{id}(id=${e.id})}"
+                                th:data-heading="'Редактирование техники (ID ' + ${e.id} + ')'"
+                                th:data-type="${e.type}"
+                                th:data-group-name="${e.groupName}"
+                                th:data-arrival-date="${e.arrivalDate}"
+                                th:data-departure-date="${e.departureDate}"
+                                th:data-driver-name="${e.driverName}">Изменить</button>
+                        <form method="post" th:action="@{/equipment/{id}/delete(id=${e.id})}"
+                              onsubmit="return confirm('Удалить эту запись?');">
+                            <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+                            <button type="submit" class="btn btn-small btn-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${items.isEmpty()}">
+                    <td colspan="7" class="empty">Ничего не найдено</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="table-head">
+            <h2>Вывоз техники по дням</h2>
+            <span class="muted">Всего вывезено за период: <b th:text="${histogramTotal}">0</b></span>
+        </div>
+        <div class="period">
+            <label>Период, дней
+                <input type="number" name="histogramDays" min="1" max="31" form="search-form"
+                       th:value="${criteria.histogramDays}">
+            </label>
+            <button type="submit" class="btn" form="search-form">Показать</button>
+        </div>
+        <div class="histogram">
+            <div class="bar-col" th:each="d : ${histogram}" th:classappend="${d.today} ? 'today'"
+                 th:title="${d.label} + ': ' + ${d.count}">
+                <span class="bar-value" th:text="${d.count}">0</span>
+                <div class="bar-track">
+                    <div class="bar" th:style="'height:' + ${d.heightPercent} + '%'"></div>
+                </div>
+                <span class="bar-label" th:text="${d.label}">01.01</span>
+                <span class="bar-weekday" th:text="${d.weekday}">пн</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<dialog id="equipment-dialog" th:data-open="${formOpen}">
+    <h2 th:text="${equipment.id == null} ? 'Новая техника' : 'Редактирование техники (ID ' + ${equipment.id} + ')'">Техника</h2>
+
+    <form method="post" class="equipment-form" th:object="${equipment}"
+          th:action="${equipment.id == null} ? @{/equipment} : @{/equipment/{id}(id=${equipment.id})}">
+        <input type="hidden" name="returnUrl" th:value="${criteria.url}">
+
+        <div class="two">
+            <label>Вид техники *
+                <input type="text" th:field="*{type}" th:errorclass="invalid" maxlength="255" required>
+                <span class="error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></span>
+            </label>
+
+            <label>Группа техники *
+                <input type="text" th:field="*{groupName}" th:errorclass="invalid" maxlength="255" required>
+                <span class="error" th:if="${#fields.hasErrors('groupName')}" th:errors="*{groupName}"></span>
+            </label>
+        </div>
+
+        <label>ФИО водителя *
+            <input type="text" th:field="*{driverName}" th:errorclass="invalid" maxlength="255" required>
+            <span class="error" th:if="${#fields.hasErrors('driverName')}" th:errors="*{driverName}"></span>
+        </label>
+
+        <div class="two">
+            <label>Дата ввоза *
+                <input type="date" th:field="*{arrivalDate}" th:errorclass="invalid" required>
+                <span class="error" th:if="${#fields.hasErrors('arrivalDate')}" th:errors="*{arrivalDate}"></span>
+            </label>
+
+            <label>Дата вывоза
+                <input type="date" th:field="*{departureDate}" th:errorclass="invalid">
+                <span class="hint">оставьте пустой, если техника ещё на складе</span>
+                <span class="error" th:if="${#fields.hasErrors('departureDate')}" th:errors="*{departureDate}"></span>
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn" formmethod="dialog" formnovalidate>Отмена</button>
+        </div>
+    </form>
+</dialog>
+
+<script th:src="@{/js/equipment-dialog.js}"></script>
+<script th:src="@{/js/list.js}"></script>
+</body>
+</html>

@@ -1,32 +1,33 @@
-package ru.library.service;
+package ru.warehouse.service;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.library.model.LoanStatus;
+import ru.warehouse.model.StockStatus;
 
 import java.time.LocalDate;
 import java.util.Set;
 
-public class BookSearchCriteria {
+public class EquipmentSearchCriteria {
 
     private static final Set<String> SORTABLE_FIELDS =
-            Set.of("id", "title", "publishingHouse", "issueDate", "studentName", "returnDate");
+            Set.of("id", "type", "groupName", "arrivalDate", "departureDate", "driverName");
 
+    private static final String DEFAULT_FIELD = "arrivalDate";
     private static final String DEFAULT_DIR = Sort.Direction.DESC.name().toLowerCase();
     private static final int MAX_HISTOGRAM_DAYS = 31;
 
-    private String title;
-    private String publishingHouse;
-    private String studentName;
-    private LoanStatus status = LoanStatus.ALL;
+    private String type;
+    private String groupName;
+    private String driverName;
+    private StockStatus status = StockStatus.ALL;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate issueFrom;
+    private LocalDate arrivalFrom;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate issueTo;
+    private LocalDate arrivalTo;
 
-    private String sortField = "issueDate";
+    private String sortField = DEFAULT_FIELD;
     private String sortDir = DEFAULT_DIR;
 
     private Integer histogramDays;
@@ -34,7 +35,7 @@ public class BookSearchCriteria {
     public String getEffectiveSortField() {
         return sortField != null && SORTABLE_FIELDS.contains(sortField)
                 ? sortField
-                : "issueDate";
+                : DEFAULT_FIELD;
     }
 
     public Sort.Direction getEffectiveDirection() {
@@ -49,11 +50,11 @@ public class BookSearchCriteria {
     public String getSortDescription() {
         String field = switch (getEffectiveSortField()) {
             case "id" -> "ID";
-            case "title" -> "названию";
-            case "publishingHouse" -> "издательству";
-            case "studentName" -> "ФИО студента";
-            case "returnDate" -> "дате сдачи";
-            default -> "дате выдачи";
+            case "type" -> "виду техники";
+            case "groupName" -> "группе техники";
+            case "departureDate" -> "дате вывоза";
+            case "driverName" -> "ФИО водителя";
+            default -> "дате ввоза";
         };
         String dir = getEffectiveDirection() == Sort.Direction.ASC ? "по возрастанию" : "по убыванию";
         return "по " + field + ", " + dir;
@@ -76,18 +77,18 @@ public class BookSearchCriteria {
     }
 
     private UriComponentsBuilder filterBuilder() {
-        UriComponentsBuilder b = UriComponentsBuilder.fromPath("/books");
-        addParam(b, "title", title);
-        addParam(b, "publishingHouse", publishingHouse);
-        addParam(b, "studentName", studentName);
-        if (status != null && status != LoanStatus.ALL) {
+        UriComponentsBuilder b = UriComponentsBuilder.fromPath("/equipment");
+        addParam(b, "type", type);
+        addParam(b, "groupName", groupName);
+        addParam(b, "driverName", driverName);
+        if (status != null && status != StockStatus.ALL) {
             b.queryParam("status", status.name());
         }
-        if (issueFrom != null) {
-            b.queryParam("issueFrom", issueFrom);
+        if (arrivalFrom != null) {
+            b.queryParam("arrivalFrom", arrivalFrom);
         }
-        if (issueTo != null) {
-            b.queryParam("issueTo", issueTo);
+        if (arrivalTo != null) {
+            b.queryParam("arrivalTo", arrivalTo);
         }
         b.queryParam("histogramDays", getHistogramDays());
         return b;
@@ -101,9 +102,9 @@ public class BookSearchCriteria {
     }
 
     public boolean isFiltered() {
-        return hasText(title) || hasText(publishingHouse) || hasText(studentName)
-                || issueFrom != null || issueTo != null
-                || (status != null && status != LoanStatus.ALL);
+        return hasText(type) || hasText(groupName) || hasText(driverName)
+                || arrivalFrom != null || arrivalTo != null
+                || (status != null && status != StockStatus.ALL);
     }
 
     private static void addParam(UriComponentsBuilder b, String name, String value) {
@@ -127,52 +128,52 @@ public class BookSearchCriteria {
         this.histogramDays = histogramDays;
     }
 
-    public String getTitle() {
-        return title;
+    public String getType() {
+        return type;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public String getPublishingHouse() {
-        return publishingHouse;
+    public String getGroupName() {
+        return groupName;
     }
 
-    public void setPublishingHouse(String publishingHouse) {
-        this.publishingHouse = publishingHouse;
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 
-    public String getStudentName() {
-        return studentName;
+    public String getDriverName() {
+        return driverName;
     }
 
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
     }
 
-    public LoanStatus getStatus() {
+    public StockStatus getStatus() {
         return status;
     }
 
-    public void setStatus(LoanStatus status) {
+    public void setStatus(StockStatus status) {
         this.status = status;
     }
 
-    public LocalDate getIssueFrom() {
-        return issueFrom;
+    public LocalDate getArrivalFrom() {
+        return arrivalFrom;
     }
 
-    public void setIssueFrom(LocalDate issueFrom) {
-        this.issueFrom = issueFrom;
+    public void setArrivalFrom(LocalDate arrivalFrom) {
+        this.arrivalFrom = arrivalFrom;
     }
 
-    public LocalDate getIssueTo() {
-        return issueTo;
+    public LocalDate getArrivalTo() {
+        return arrivalTo;
     }
 
-    public void setIssueTo(LocalDate issueTo) {
-        this.issueTo = issueTo;
+    public void setArrivalTo(LocalDate arrivalTo) {
+        this.arrivalTo = arrivalTo;
     }
 
     public String getSortField() {

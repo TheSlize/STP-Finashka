@@ -1,19 +1,20 @@
 async function load(url, options) {
     const response = await fetch(url, options);
-    if (!response.ok) {
+    // если сессия истекла, сервер отдаёт страницу входа - тогда просто перезагружаемся и попадаем на неё
+    if (!response.ok || new URL(response.url).pathname === '/login') {
         location.reload();
         return;
     }
     const page = new DOMParser().parseFromString(await response.text(), 'text/html');
     document.querySelector('main').innerHTML = page.querySelector('main').innerHTML;
 
-    const bookDialog = document.getElementById('book-dialog');
-    const loadedDialog = page.getElementById('book-dialog');
-    bookDialog.innerHTML = loadedDialog.innerHTML;
+    const equipmentDialog = document.getElementById('equipment-dialog');
+    const loadedDialog = page.getElementById('equipment-dialog');
+    equipmentDialog.innerHTML = loadedDialog.innerHTML;
     if (!loadedDialog.dataset.open) {
-        bookDialog.close();
-    } else if (!bookDialog.open) {
-        bookDialog.showModal();
+        equipmentDialog.close();
+    } else if (!equipmentDialog.open) {
+        equipmentDialog.showModal();
     }
 
     if (response.url !== location.href) {
@@ -23,7 +24,9 @@ async function load(url, options) {
 
 document.addEventListener('submit', event => {
     const button = event.submitter;
-    if (event.defaultPrevented || (button && button.getAttribute('formmethod') === 'dialog')) {
+    // форма выхода в шапке отправляется обычным способом
+    if (event.defaultPrevented || !event.target.closest('main, dialog')
+            || (button && button.getAttribute('formmethod') === 'dialog')) {
         return;
     }
     event.preventDefault();
